@@ -1,7 +1,7 @@
 # neopixel_remote
 
 A wifi based remote control for sending commands to the [mirronelli/neopixel](https://github.com/mirronelli/neopixel) based projects.
-This 2 board based solution deliver absolute flicker free neopixel experience.  
+This 2 board based solution delivers absolute flicker free neopixel experience.  
 
 Use idf.py menuconfig in this repo, to configure the mqtt broker address and topic for listening to commands.
 Connect the first ESP32 board running the neopixel_remote project to another ESP32 board running the mirronelli/neopixel led driver project via 3 wires.
