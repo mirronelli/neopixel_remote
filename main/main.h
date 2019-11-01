@@ -11,7 +11,17 @@ public:
 
 private:
 	void StartWifi();
-	void ProcessCommand(std::string command);
+
+	static void MqttConnectHandler(void* instance);
+	static void MqttDisconnectHandler(void* instance);
+	void ProcessMqttConnect();
+	void ProcessMqttDiconnect();
+
+	static void WifiConnectHandler(void* instance);
+	static void WifiDisconnectHandler(void* instance);
+	void ProcessWifiConnect();
+	void ProcessWifiDisconnect();
+
 	static void HandleMqttMessage(std::string topic, std::string message, void* arg);
 
 	mMqttClient *mqttClient = nullptr;

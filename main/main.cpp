@@ -32,20 +32,30 @@ void app_main()
 void Main::Run()
 {
 	commandSender = new UartCommandSender(GPIO_NUM_5, GPIO_NUM_4);
-	wifiClient = new mWifiClient(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD, 5);
-	StartWifi();
-	mqttClient = new mMqttClient(mqttBrokerAddress);
-	mqttCommandReturnTopic = mqttCommandTopic + "Ret";
-	mqttClient->Subscribe(mqttCommandTopic, 1, Main::HandleMqttMessage, this);
+	wifiClient = new mWifiClient(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD, Main::WifiConnectHandler, Main::WifiDisconnectHandler, this);
+	mqttClient = new mMqttClient(mqttBrokerAddress, Main::MqttConnectHandler, Main::MqttDisconnectHandler, this);
+	// mqttCommandReturnTopic = mqttCommandTopic + "Ret";
+
+	while (true)
+	{
+		if (!wifiClient->IsConnected())
+		{
+			wifiClient->Connect(5000);
+		}
+
+		vTaskDelay(30'000/portTICK_RATE_MS);
+	}
 }
 
-void Main::StartWifi()
+void Main::ProcessWifiConnect()
 {
-	int retryCount = 0;
-	while (!wifiClient->Connect(++retryCount * 5000) && retryCount < 5)
-	{
-		ESP_LOGI(logTag, "Failed to connect. Retrying.. %d/5", retryCount);
-	}
+	ESP_LOGI(logTag, "Wifi Connected.");
+	mqttClient->Start();
+}
+
+void Main::ProcessWifiDisconnect()
+{
+	ESP_LOGI(logTag, "Disconnected.");
 }
 
 void Main::HandleMqttMessage(string topic, string message, void* arg)
@@ -54,3 +64,39 @@ void Main::HandleMqttMessage(string topic, string message, void* arg)
 	printf("sending command: %s\n", message.c_str());
 	instance->commandSender->SendCommand(message);
 }
+
+void Main::ProcessMqttConnect()
+{
+	ESP_LOGI(logTag, "Mqtt connected.");
+	ESP_LOGI(logTag, "Subscribing.");
+	mqttClient->Subscribe(mqttCommandTopic, 1, Main::HandleMqttMessage, this);
+};
+
+void Main::ProcessMqttDiconnect()
+{
+	ESP_LOGI(logTag, "Mqtt disconnected.");
+};
+
+void Main::WifiConnectHandler(void* arg)
+{
+	Main* instance = (Main*)arg;
+	instance->ProcessWifiConnect();
+}
+
+void Main::WifiDisconnectHandler(void* arg)
+{
+	Main* instance = (Main*)arg;
+	instance->ProcessWifiDisconnect();
+}
+
+void Main::MqttConnectHandler(void* arg)
+{
+	Main* instance = (Main*)arg;
+	instance->ProcessMqttConnect();
+};
+
+void Main::MqttDisconnectHandler(void* arg)
+{
+	Main* instance = (Main*)arg;
+	instance->ProcessMqttDiconnect();
+};
