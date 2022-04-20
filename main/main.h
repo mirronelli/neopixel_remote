@@ -27,4 +27,8 @@ private:
 	mMqttClient *mqttClient = nullptr;
 	mWifiClient *wifiClient = nullptr;
 	UartCommandSender *commandSender = nullptr;
+
+	bool ledState = 0;
+	void Blink(int delay);
+	void HalfBlink(int delay);
 };
